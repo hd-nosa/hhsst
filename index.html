@@ -1,1 +1,613 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>한화시스템 구매 직무 퀴즈</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Space+Mono:wght@700&display=swap');
 
+  :root {
+    --bg: #0a0e1a;
+    --card: #111827;
+    --border: #1e2d45;
+    --accent: #f97316;
+    --accent2: #3b82f6;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --correct: #22c55e;
+    --wrong: #ef4444;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px;
+  }
+
+  h1 {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 3px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .subtitle {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    margin-bottom: 28px;
+  }
+
+  /* 탭 선택 */
+  .tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .tab {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1.5px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .tab:hover { border-color: var(--accent); color: var(--accent); }
+
+  .tab.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+    font-weight: 700;
+  }
+
+  .tab.t2.active { background: var(--accent2); border-color: var(--accent2); }
+  .tab.t2:hover { border-color: var(--accent2); color: var(--accent2); }
+  .tab.t3.active { background: #8b5cf6; border-color: #8b5cf6; }
+  .tab.t3:hover { border-color: #8b5cf6; color: #8b5cf6; }
+  .tab.tall.active { background: #10b981; border-color: #10b981; }
+  .tab.tall:hover { border-color: #10b981; color: #10b981; }
+
+  /* 퀴즈 카드 */
+  .quiz-wrap {
+    width: 100%;
+    max-width: 560px;
+  }
+
+  .progress-bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .progress-bar {
+    flex: 1;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+
+  .progress-text {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    white-space: nowrap;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 28px 24px 24px;
+    margin-bottom: 16px;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .q-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+    margin-bottom: 12px;
+  }
+
+  .q-text {
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.6;
+    margin-bottom: 24px;
+    word-break: keep-all;
+  }
+
+  .choices {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .choice {
+    padding: 13px 16px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 14px;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.18s;
+    line-height: 1.5;
+    word-break: keep-all;
+  }
+
+  .choice:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: rgba(249,115,22,0.07);
+  }
+
+  .choice.correct {
+    border-color: var(--correct);
+    background: rgba(34,197,94,0.1);
+    color: var(--correct);
+    font-weight: 700;
+  }
+
+  .choice.wrong {
+    border-color: var(--wrong);
+    background: rgba(239,68,68,0.08);
+    color: var(--wrong);
+  }
+
+  .choice:disabled { cursor: default; }
+
+  /* 해설 */
+  .explanation {
+    margin-top: 16px;
+    padding: 14px 16px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.04);
+    border-left: 3px solid var(--accent);
+    font-size: 13px;
+    line-height: 1.7;
+    color: #94a3b8;
+    display: none;
+    word-break: keep-all;
+  }
+
+  .explanation.show { display: block; animation: fadeIn 0.2s ease; }
+
+  .explanation strong { color: var(--text); }
+
+  /* 버튼 */
+  .btn-next {
+    width: 100%;
+    padding: 14px;
+    border-radius: 8px;
+    border: none;
+    background: var(--accent);
+    color: white;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    display: none;
+    transition: opacity 0.2s;
+  }
+
+  .btn-next:hover { opacity: 0.88; }
+  .btn-next.show { display: block; animation: fadeIn 0.2s ease; }
+
+  /* 결과 */
+  .result {
+    text-align: center;
+    padding: 40px 24px;
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    display: none;
+    animation: fadeIn 0.4s ease;
+  }
+
+  .result.show { display: block; }
+
+  .score-big {
+    font-family: 'Space Mono', monospace;
+    font-size: 56px;
+    font-weight: 700;
+    margin: 12px 0 4px;
+  }
+
+  .score-label {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 24px;
+  }
+
+  .comment {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .comment-sub {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 28px;
+  }
+
+  .btn-retry {
+    padding: 12px 28px;
+    border-radius: 8px;
+    border: 1.5px solid var(--accent);
+    background: transparent;
+    color: var(--accent);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-retry:hover { background: var(--accent); color: white; }
+
+  .start-screen {
+    text-align: center;
+    padding: 40px 24px;
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    max-width: 560px;
+    width: 100%;
+  }
+
+  .start-icon { font-size: 40px; margin-bottom: 16px; }
+  .start-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+  .start-desc { font-size: 13px; color: var(--muted); line-height: 1.7; word-break: keep-all; }
+</style>
+</head>
+<body>
+
+<h1>PT QUIZ</h1>
+<div class="subtitle">한화시스템 구매직무 면접 대비</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="selectCategory(0)">🥇 1순위 구매 프로세스</button>
+  <button class="tab t2" onclick="selectCategory(1)">🥈 2순위 핵심 용어</button>
+  <button class="tab t3" onclick="selectCategory(2)">🥉 3순위 구미사업장</button>
+  <button class="tab tall" onclick="selectCategory(3)">🎯 전체 랜덤</button>
+</div>
+
+<div class="start-screen" id="startScreen">
+  <div class="start-icon">📋</div>
+  <div class="start-title">카테고리를 선택하고 시작하세요</div>
+  <div class="start-desc">위 버튼을 눌러 카테고리를 선택하면<br>퀴즈가 바로 시작됩니다.<br><br>면접까지 화이팅! 💪</div>
+</div>
+
+<div class="quiz-wrap" id="quizWrap" style="display:none">
+  <div class="progress-bar-wrap">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">1 / 10</div>
+  </div>
+  <div class="card" id="card">
+    <div class="q-label" id="qLabel">Q 01</div>
+    <div class="q-text" id="qText"></div>
+    <div class="choices" id="choices"></div>
+    <div class="explanation" id="explanation"></div>
+  </div>
+  <button class="btn-next" id="btnNext" onclick="nextQ()">다음 문제 →</button>
+</div>
+
+<div class="result" id="result">
+  <div class="score-label">최종 점수</div>
+  <div class="score-big" id="scoreBig"></div>
+  <div class="score-label" id="scoreLabel"></div>
+  <div class="comment" id="comment"></div>
+  <div class="comment-sub" id="commentSub"></div>
+  <button class="btn-retry" onclick="retry()">다시 풀기</button>
+</div>
+
+<script>
+const ALL = {
+  p: [ // 1순위: 구매 프로세스
+    {
+      q: "구매 프로세스의 첫 번째 단계는?",
+      choices: ["협력사 선정", "수요 파악", "계약 체결", "발주"],
+      answer: 1,
+      exp: "<strong>수요 파악</strong>이 시작점이에요. 생산·개발팀이 '이 부품 OO개 필요해요'라고 구매팀에 요청(PR)하는 것에서 구매 업무가 시작됩니다."
+    },
+    {
+      q: "방산 구매에서 '납기 하루 지연'이 위험한 이유는?",
+      choices: ["협력사 관계가 나빠져서", "지체상금 발생 + 군납 신뢰도 하락으로 연쇄 피해", "원가가 올라가서", "재고가 부족해져서"],
+      answer: 1,
+      exp: "협력사 납기 지연 → 한화시스템 생산 지연 → 정부 납기 지연 → <strong>지체상금</strong> 발생. 방산은 납기 하루가 막대한 금전 손실로 이어집니다."
+    },
+    {
+      q: "방산 구매에서 '사양 확정' 단계에 특수한 점은?",
+      choices: ["가격만 먼저 정한다", "군 전용 규격(MIL-SPEC) 적용 + 도면이 군사기밀일 수 있음", "협력사가 사양을 정한다", "사양 확정은 생략 가능"],
+      answer: 1,
+      exp: "방산 부품에는 <strong>군 전용 규격(MIL-SPEC)</strong>이 있어요. 일반 마트에서 살 수 있는 부품이 아니라 군사 목적에 맞게 설계된 특수 규격이에요. 도면 자체가 기밀일 수 있어 협력사 공유 시 보안 절차가 필수예요."
+    },
+    {
+      q: "협력사 선정 시 방산에서 일반 구매와 다른 점은?",
+      choices: ["가격이 가장 중요", "아무 업체나 선택 가능", "정부 지정 업체만 가능한 품목 존재 + ESG 평가 점수 반영", "납기만 보면 된다"],
+      answer: 2,
+      exp: "방산 부품은 법적으로 <strong>정부 지정 업체</strong>만 만들 수 있는 것들이 있어요. 또한 한화시스템은 가격만이 아니라 <strong>ESG 평가 점수</strong>도 협력사 선정에 반영합니다."
+    },
+    {
+      q: "방산 계약서에서 반드시 포함되는 특수 조항은?",
+      choices: ["할인 조항", "지체상금 + 부패방지 준법서약서", "비밀유지각서만", "환경부담금"],
+      answer: 1,
+      exp: "<strong>지체상금</strong>(납기 미이행 시 패널티)과 2025년부터 의무화된 <strong>부패방지 준법서약서</strong>가 방산 계약의 특수 조항이에요. 해외 부품은 환율 변동 전략도 함께 고려해야 해요."
+    },
+    {
+      q: "'Long Lead Item'이란?",
+      choices: ["비싼 부품", "제조 기간이 오래 걸리는 부품 — 계약 즉시 선발주 필요", "해외 수입 부품", "불량률이 높은 부품"],
+      answer: 1,
+      exp: "어떤 부품은 만드는 데만 6개월~1년이 걸려요. 이런 <strong>Long Lead Item</strong>은 따로 리스트를 만들어 계약하자마자 바로 발주해야 납기를 맞출 수 있어요."
+    },
+    {
+      q: "방산 입고 검수 단계에서 일반 기업과 다른 점은?",
+      choices: ["검수를 생략할 수 있다", "정부 기관(국방기술품질원) 입회 + 위변조 부품 검증 필수", "협력사가 자체 검수", "수량만 확인하면 된다"],
+      answer: 1,
+      exp: "중요 부품은 <strong>국방기술품질원</strong>이 입회하여 함께 확인해요. 전자부품 위변조(가짜 부품)는 무기 오작동으로 이어질 수 있어 <strong>ERAI</strong> 같은 전용 검증 사이트로 반드시 확인해야 합니다."
+    },
+    {
+      q: "한화시스템이 명절 전에 협력사에 거래대금을 미리 주는 이유는?",
+      choices: ["법적 의무라서", "협력사 자금 부담 경감 + 공급망 안정성 확보", "단가를 낮추기 위해", "재고를 늘리기 위해"],
+      answer: 1,
+      exp: "한화시스템은 설·추석 명절 전 <strong>223억 원</strong>의 거래대금을 조기 지급해요. 협력사 자금 부담을 줄여 공급망을 안정시키는 상생 전략이에요."
+    },
+    {
+      q: "사후 관리 단계에서 방산의 특수성은?",
+      choices: ["납품하면 관계 종료", "PBL 계약으로 납품 후 수리부속·유지보수까지 연결", "가격 재협상만 진행", "협력사 교체가 주 업무"],
+      answer: 1,
+      exp: "<strong>PBL(Performance Based Logistics)</strong> — 납품 후 일정 기간 성능을 보장하고 유지보수까지 책임지는 계약 방식이에요. 처음 납품 협력사가 이후 MRO 조달까지 연결되는 구조예요."
+    },
+    {
+      q: "방산 구매에서 '수요 파악'이 일반 기업과 다른 이유는?",
+      choices: ["수요 파악이 필요 없다", "당일 필요한 것만 산다", "수주잔고 9조 원 기준으로 수년 앞서 미리 계획", "협력사가 알아서 보낸다"],
+      answer: 2,
+      exp: "한화시스템은 앞으로 <strong>3~4년치 일감(수주잔고 9조 원)</strong>이 쌓여 있어요. 그래서 구매팀은 미래 납품 일정을 보고 몇 년 앞서 미리 계획을 세워야 해요."
+    }
+  ],
+  t: [ // 2순위: 핵심 용어
+    {
+      q: "TCO(Total Cost of Ownership)의 의미는?",
+      choices: ["구매 가격만 계산", "물류비·관리비·불량비·유지보수비 포함한 총 소유 비용", "세금 포함 가격", "협력사 수익"],
+      answer: 1,
+      exp: "<strong>TCO</strong>는 단순 구매가격이 아닌 물류비, 관리비, 불량비, 유지보수비까지 포함한 실질 비용이에요. '싸게 사는 것'보다 '가치 있게 사는 것'이 구매의 핵심이에요."
+    },
+    {
+      q: "MRO란 무엇인가?",
+      choices: ["신규 부품 구매", "Maintenance·Repair·Overhaul — 납품 후 유지보수·정비 부품 조달", "마케팅 관련 업무", "원자재 조달"],
+      answer: 1,
+      exp: "<strong>MRO = Maintenance(유지) + Repair(수리) + Overhaul(정비)</strong>. 납품 후 무기를 운용하는 동안 필요한 수리부속, 정비 부품을 조달하는 업무예요. 구미사업장 핵심 사업부예요."
+    },
+    {
+      q: "지체상금의 공식은?",
+      choices: ["계약금액 × 지체일수", "계약금액 × 지체상금률 × 지체일수", "지체일수 × 부품 수량", "납기 - 실제 납품일"],
+      answer: 1,
+      exp: "<strong>지체상금 = 계약금액 × 지체상금률 × 지체일수</strong>. 제조업은 0.075%를 적용해요. 납기가 길어질수록 금액이 커지니 구매팀의 납기 관리가 매우 중요해요."
+    },
+    {
+      q: "SCM이란?",
+      choices: ["소프트웨어 관리 시스템", "Supply Chain Management — 원재료 조달부터 최종 납품까지 전체 공급망 관리", "협력사 신용 평가", "재고 자동화 시스템"],
+      answer: 1,
+      exp: "<strong>SCM(Supply Chain Management)</strong>은 원재료 조달부터 최종 납품까지 전체 흐름을 관리하는 개념이에요. 구매 직무의 핵심 영역이고 면접에서 자주 언급되는 용어예요."
+    },
+    {
+      q: "원가 절감 vs 원가 회피의 차이는?",
+      choices: ["둘 다 같은 말", "원가 절감은 기존 단가를 낮추는 것, 원가 회피는 인상 예정 단가를 막는 것", "원가 회피가 더 중요하다", "원가 절감만 KPI에 포함"],
+      answer: 1,
+      exp: "<strong>원가 절감</strong>은 현재 단가를 낮추는 것, <strong>원가 회피</strong>는 올라갈 예정인 단가를 막는 것이에요. 둘 다 구매 KPI에 포함되고, 면접에서 이 구분을 알고 있으면 인상적이에요."
+    },
+    {
+      q: "PR과 PO의 차이는?",
+      choices: ["같은 문서다", "PR은 구매 요청서(내부), PO는 발주서(협력사에 공식 주문)", "PO가 먼저 발행된다", "PR은 협력사가 작성"],
+      answer: 1,
+      exp: "<strong>PR(Purchase Requisition)</strong>은 생산·개발팀이 구매팀에 조달을 요청하는 내부 문서예요. <strong>PO(Purchase Order)</strong>는 구매팀이 협력사에 공식 발주하는 계약 효력이 있는 문서예요."
+    },
+    {
+      q: "볼륨 디스카운트(Volume Discount) 협상 전략이란?",
+      choices: ["품질로 협상", "발주 물량 증가를 레버리지로 단가를 낮추는 협상", "납기를 늘려서 협상", "선금을 주고 협상"],
+      answer: 1,
+      exp: "수주잔고 <strong>9조 원</strong> 규모를 근거로 중장기 물량 확약을 제시하며 단가를 낮추는 전략이에요. 한화시스템 구매팀이 실제로 쓸 수 있는 강력한 협상 레버리지예요."
+    }
+  ],
+  g: [ // 3순위: 구미사업장
+    {
+      q: "구미 신사업장 투자 규모와 준공일은?",
+      choices: ["1,000억, 2024년 1월", "2,800억, 2025년 11월 25일", "5,000억, 2026년 3월", "500억, 2023년 6월"],
+      answer: 1,
+      exp: "한화시스템은 경북 구미에 <strong>약 2,800억 원</strong>을 투자해 <strong>2025년 11월 25일</strong> 신사업장 준공식을 개최했어요. 기존 대비 2배 이상 확장된 8만 9,000㎡ 규모예요."
+    },
+    {
+      q: "구미 자재관리실에서 관리하는 원자재·부품 종류는?",
+      choices: ["약 1,000종", "약 5,000종", "약 2만 종", "약 50만 종"],
+      answer: 2,
+      exp: "약 700평 규모 자재관리실에서 <strong>2만여 종</strong>의 원자재·부품을 물류 로봇(오토스토어·AMR)으로 관리해요. 구매 직무가 다루는 품목의 복잡도가 매우 높다는 의미예요."
+    },
+    {
+      q: "구미 신사업장의 클린룸 규모와 용도는?",
+      choices: ["100평, 사무실 용도", "1,500평, 전자광학·레이다 핵심부품 생산", "300평, 회의실 용도", "500평, 창고 용도"],
+      answer: 1,
+      exp: "국내 방산업계 <strong>최대 규모인 1,500평 클린룸</strong>에서 전자광학 제품과 레이다 핵심부품이 생산돼요. 먼지 하나도 안 되는 정밀 부품이라 클린룸 환경이 필수예요."
+    },
+    {
+      q: "한화시스템의 2032년 매출 목표와 수출 비중 목표는?",
+      choices: ["3조, 20%", "5조 4,000억, 40%", "10조, 60%", "2조, 15%"],
+      answer: 1,
+      exp: "한화시스템은 <strong>2032년까지 매출 5조 4,000억 원, 수출 비중 40%</strong>를 목표로 해요. 현재 수출 비중은 약 26%로, 구미사업장이 수출 전진기지 역할을 맡고 있어요."
+    },
+    {
+      q: "천궁-II MFR을 수출한 국가 순서(연도 순)는?",
+      choices: ["필리핀→UAE→사우디", "UAE(2022)→사우디(2024)→이라크(2025)", "이라크→사우디→UAE", "사우디→이라크→UAE"],
+      answer: 1,
+      exp: "<strong>UAE(2022년, ~1조 3,000억)</strong> → <strong>사우디(2024년, ~1조 2,000억)</strong> → <strong>이라크(2025년, ~8,600억)</strong> 순으로 천궁-II 다기능레이다를 수출했어요. 필리핀에는 함정 전투체계를 13척 연속 수출했어요."
+    },
+    {
+      q: "구미사업장에서 구매 직무 관점에서 가장 중요한 변화는?",
+      choices: ["사옥이 새로 생겼다", "생산 능력 2배 확장 → 조달 물량 2배 + 원스톱 생산 가능", "직원 수가 늘었다", "연구소가 이전했다"],
+      answer: 1,
+      exp: "신사업장으로 생산 체계가 대폭 커지면서 <strong>조달 물량도 비례해서 증가</strong>해요. 기존에는 5개 건물에 분산됐지만 이제 <strong>원스톱 생산</strong>이 가능해져 구매 효율이 중요해졌어요."
+    }
+  ]
+};
+
+let currentCat = 'p';
+let questions = [];
+let currentIdx = 0;
+let score = 0;
+let answered = false;
+
+function selectCategory(idx) {
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', i === idx);
+  });
+  const cats = ['p', 't', 'g', 'all'];
+  currentCat = cats[idx];
+
+  if (currentCat === 'all') {
+    questions = shuffle([...ALL.p, ...ALL.t, ...ALL.g]);
+  } else {
+    questions = shuffle([...ALL[currentCat]]);
+  }
+
+  document.getElementById('startScreen').style.display = 'none';
+  document.getElementById('result').classList.remove('show');
+  document.getElementById('quizWrap').style.display = 'block';
+  currentIdx = 0;
+  score = 0;
+  renderQ();
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function renderQ() {
+  answered = false;
+  const q = questions[currentIdx];
+  const total = questions.length;
+
+  document.getElementById('progressFill').style.width = ((currentIdx / total) * 100) + '%';
+  document.getElementById('progressText').textContent = `${currentIdx + 1} / ${total}`;
+  document.getElementById('qLabel').textContent = `Q ${String(currentIdx + 1).padStart(2, '0')}`;
+  document.getElementById('qText').textContent = q.q;
+  document.getElementById('explanation').className = 'explanation';
+  document.getElementById('explanation').innerHTML = '';
+  document.getElementById('btnNext').className = 'btn-next';
+
+  const choicesEl = document.getElementById('choices');
+  choicesEl.innerHTML = '';
+  q.choices.forEach((c, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice';
+    btn.textContent = c;
+    btn.onclick = () => selectAnswer(i, q.answer, q.exp);
+    choicesEl.appendChild(btn);
+  });
+}
+
+function selectAnswer(idx, answer, exp) {
+  if (answered) return;
+  answered = true;
+
+  const btns = document.querySelectorAll('.choice');
+  btns.forEach((btn, i) => {
+    btn.disabled = true;
+    if (i === answer) btn.classList.add('correct');
+    else if (i === idx) btn.classList.add('wrong');
+  });
+
+  if (idx === answer) score++;
+
+  const expEl = document.getElementById('explanation');
+  expEl.innerHTML = '💡 ' + exp;
+  expEl.classList.add('show');
+
+  const btnNext = document.getElementById('btnNext');
+  btnNext.textContent = currentIdx + 1 < questions.length ? '다음 문제 →' : '결과 보기';
+  btnNext.classList.add('show');
+}
+
+function nextQ() {
+  currentIdx++;
+  if (currentIdx >= questions.length) {
+    showResult();
+  } else {
+    renderQ();
+  }
+}
+
+function showResult() {
+  document.getElementById('quizWrap').style.display = 'none';
+  const total = questions.length;
+  const pct = Math.round((score / total) * 100);
+
+  document.getElementById('scoreBig').textContent = `${score}/${total}`;
+  document.getElementById('scoreLabel').textContent = `정답률 ${pct}%`;
+
+  let comment, sub, color;
+  if (pct >= 90) {
+    comment = '완벽해요! 🎉';
+    sub = '면접 준비 완료! 자신감 있게 내일 임하세요.';
+    color = '#22c55e';
+  } else if (pct >= 70) {
+    comment = '잘 하고 있어요! 💪';
+    sub = '틀린 문제 위주로 한 번 더 복습하면 완벽해요.';
+    color = '#f97316';
+  } else {
+    comment = '한 번 더 도전! 🔥';
+    sub = '다시 풀면서 해설을 꼼꼼히 읽어보세요. 할 수 있어요!';
+    color = '#3b82f6';
+  }
+
+  document.getElementById('scoreBig').style.color = color;
+  document.getElementById('comment').textContent = comment;
+  document.getElementById('commentSub').textContent = sub;
+  document.getElementById('result').classList.add('show');
+}
+
+function retry() {
+  selectCategory(['p','t','g','all'].indexOf(currentCat));
+}
+</script>
+</body>
+</html>
